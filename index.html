@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 11.2 – Playing with Multiplication & Division</title>
+<style>
+  /* ===== GOOGLE FONTS ===== */
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
+
+  /* ===== CSS VARIABLES ===== */
+  :root {
+    --nav-w: 90px;
+    --nav-w-open: 220px;
+    --c-bg: #f0f4ff;
+    --c-nav: #1e2a5e;
+    --c-nav-acc: #3b5bdb;
+    --c-1: #3b5bdb;   /* blue  – distributive */
+    --c-2: #0ca678;   /* green – division */
+    --c-3: #e67700;   /* orange – sweets */
+    --c-4: #7048e8;   /* purple – puzzle */
+    --c-correct: #2f9e44;
+    --c-wrong: #e03131;
+    --c-warn: #e67700;
+    --radius: 18px;
+    --shadow: 0 6px 24px rgba(30,42,94,.13);
+    --font-h: 'Fredoka One', cursive;
+    --font-b: 'Nunito', sans-serif;
+  }
+
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    height: 100dvh;
+    font-family: var(--font-b);
+    background: var(--c-bg);
+    font-size: 16px;
+  }
+  body {
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ===== LEFT NAV ===== */
+  #nav {
+    width: var(--nav-w);
+    min-height: 0;
+    background: var(--c-nav);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 8px 20px;
+    flex-shrink: 0;
+    z-index: 100;
+    transition: width .3s ease;
+    overflow: hidden;
+  }
+  #nav .nav-logo {
+    font-family: var(--font-h);
+    color: #fff;
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .nav-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255,255,255,.65);
+    font-family: var(--font-b);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    transition: background .2s, color .2s, transform .1s;
+    min-height: 80px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn .nav-icon { font-size: 28px; line-height: 1; }
+  .nav-btn:hover, .nav-btn.active {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+  }
+  .nav-btn.active { background: rgba(255,255,255,.2); }
+  .nav-btn[data-sec="1"].active { border-left: 4px solid var(--c-1); }
+  .nav-btn[data-sec="2"].active { border-left: 4px solid var(--c-2); }
+  .nav-btn[data-sec="3"].active { border-left: 4px solid var(--c-3); }
+  .nav-btn[data-sec="4"].active { border-left: 4px solid var(--c-4); }
+
+  /* Progress dots */
+  .nav-dots {
+    display: flex; gap: 4px; margin-top: 2px;
+  }
+  .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    transition: background .3s;
+  }
+  .nav-dot.done { background: #4ade80; }
+
+  /* ===== MAIN SCROLL AREA ===== */
+  #main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    padding: 28px 24px;
+    padding-bottom: calc(200px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ===== SECTION PANELS ===== */
+  .section { display: none; animation: fadeIn .4s ease; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* ===== SECTION HEADER ===== */
+  .sec-header {
+    border-radius: var(--radius);
+    padding: 22px 28px;
+    margin-bottom: 28px;
+    color: #fff;
+    box-shadow: var(--shadow);
+  }
+  .sec-header .badge {
+    font-size: 12px; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; opacity: .8; margin-bottom: 6px;
+  }
+  .sec-header h1 { font-family: var(--font-h); font-size: clamp(22px,5vw,34px); line-height: 1.15; }
+  .sec-header p { margin-top: 8px; font-size: 15px; opacity: .9; line-height: 1.5; }
+  #sec1 .sec-header { background: linear-gradient(135deg, #3b5bdb, #748ffc); }
+  #sec2 .sec-header { background: linear-gradient(135deg, #0ca678, #38d9a9); }
+  #sec3 .sec-header { background: linear-gradient(135deg, #e67700, #ffa94d); }
+  #sec4 .sec-header { background: linear-gradient(135deg, #7048e8, #b197fc); }
+
+  /* ===== CARD ===== */
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-family: var(--font-h);
+    font-size: 20px;
+    margin-bottom: 14px;
+    color: #1e2a5e;
+  }
+
+  /* ===== CONCEPT BOX ===== */
+  .concept-box {
+    background: #eef2ff;
+    border-left: 5px solid var(--c-1);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    color: #1e2a5e;
+    line-height: 1.6;
+  }
+
+  /* ===== PROBLEM TABS ===== */
+  .problem-tabs {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+  }
+  .prob-tab {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 2.5px solid #dde1f0;
+    background: #fff;
+    font-family: var(--font-b);
+    font-size: 16px;
+    font-weight: 700;
+    color: #555;
+    cursor: pointer;
+    min-width: 110px;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: all .2s;
+  }
+  .prob-tab.active {
+    background: var(--c-1);
+    border-color: var(--c-1);
+    color: #fff;
+  }
+  .prob-tab.done {
+    border-color: var(--c-correct);
+    color: var(--c-correct);
+  }
+  .prob-tab.done.active {
+    background: var(--c-correct);
+    color: #fff;
+  }
+
+  /* ===== DISTRIBUTIVE SOLVER ===== */
+  .dist-solver { display: none; }
+  .dist-solver.active { display: block; }
+
+  .step-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e2a5e;
+  }
+  .step-label {
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  /* Inputs */
+  .math-input {
+    width: 72px;
+    height: 52px;
+    border: 3px solid #c5cbef;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 20px;
+    font-family: var(--font-b);
+    font-weight: 800;
+    color: #1e2a5e;
+    background: #f8f9ff;
+    outline: none;
+    transition: border-color .2s, background .2s;
+    -webkit-appearance: none;
+  }
+  .math-input:focus { border-color: var(--c-1); background: #fff; }
+  .math-input.correct { border-color: var(--c-correct); background: #f0fff4; color: var(--c-correct); }
+  .math-input.incorrect { border-color: var(--c-wrong); background: #fff5f5; animation: shake .3s; }
+  .math-input[readonly] { background: #f0fff4; color: var(--c-correct); border-color: var(--c-correct); cursor: default; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+
+  .math-input.wide { width: 90px; }
+
+  /* Check button */
+  .btn-check {
+    padding: 14px 28px;
+    border-radius: 14px;
+    border: none;
+    font-family: var(--font-b);
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .1s, box-shadow .1s;
+    box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    min-height: 54px;
+  }
+  .btn-check:active { transform: scale(.97); }
+  .btn-primary { background: var(--c-1); color: #fff; }
+  #sec2 .btn-primary { background: var(--c-2); }
+  #sec3 .btn-primary { background: var(--c-3); }
+  #sec4 .btn-primary { background: var(--c-4); }
+
+  /* Feedback row */
+  .feedback {
+    margin-top: 12px;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok { background: #ebfbee; color: var(--c-correct); }
+  .feedback.bad { background: #fff5f5; color: var(--c-wrong); }
+
+  /* Equation box */
+  .eq-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e2a5e;
+  }
+  .eq-op {
+    font-size: 24px;
+    font-weight: 900;
+    color: #748ffc;
+  }
+  .eq-result {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--c-1);
+    min-width: 60px;
+  }
+
+  /* Arrow */
+  .arrow-down {
+    text-align: center;
+    font-size: 28px;
+    color: #c5cbef;
+    margin: 4px 0;
+  }
+
+  /* ===== DIVISION GRID ===== */
+  .div-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  .div-card {
+    background: #f8fff8;
+    border: 2.5px solid #c3f1e0;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .div-card .label { font-size: 13px; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .div-eq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 20px; font-weight: 800; color: #1e2a5e; }
+  .div-eq .r-label { font-size: 14px; font-weight: 700; color: #555; }
+  .div-card .math-input { width: 64px; height: 50px; font-size: 18px; }
+  .div-card .math-input:focus { border-color: var(--c-2); }
+  .div-card .math-input.correct { border-color: var(--c-correct); }
+  .div-card .feedback { margin-top: 4px; font-size: 14px; padding: 8px 12px; }
+
+  /* ===== SWEETS SECTION ===== */
+  .sweets-visual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 14px 0;
+    padding: 16px;
+    background: #fff9f0;
+    border-radius: 14px;
+    border: 2px dashed #ffa94d;
+  }
+  .sweet {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: transform .2s;
+  }
+  .sweet:hover { transform: scale(1.15); }
+
+  .children-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .child-box {
+    background: #fff3e0;
+    border: 2.5px solid #ffa94d;
+    border-radius: 14px;
+    padding: 14px 20px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #7c4f00;
+    min-width: 90px;
+  }
+  .child-box .child-icon { font-size: 30px; margin-bottom: 6px; }
+  .child-box .child-count {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--c-3);
+  }
+
+  /* ===== NUMBER PUZZLE ===== */
+  .number-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .num-btn {
+    width: 72px; height: 72px;
+    border-radius: 16px;
+    border: 3px solid #d0d5f0;
+    background: #fff;
+    font-family: var(--font-h);
+    font-size: 26px;
+    color: #1e2a5e;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all .18s;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,.1);
+  }
+  .num-btn:hover { border-color: var(--c-4); transform: translateY(-2px); }
+  .num-btn.selected { border-color: var(--c-4); background: #ede9fe; color: var(--c-4); }
+  .num-btn.correct-num { border-color: var(--c-correct); background: #ebfbee; color: var(--c-correct); animation: pop .3s; }
+  .num-btn.wrong-num { border-color: var(--c-wrong); background: #fff5f5; color: var(--c-wrong); animation: shake .3s; }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+  .divisor-check-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .div-check-box {
+    background: #f3f0ff;
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    border: 2.5px solid #d0c9f5;
+  }
+  .div-check-box .div-by { font-size: 13px; color: #888; font-weight: 700; }
+  .div-check-box .div-result { font-size: 18px; font-weight: 800; color: #555; margin-top: 4px; }
+  .div-check-box.has-rem { border-color: var(--c-correct); background: #ebfbee; }
+  .div-check-box.has-rem .div-result { color: var(--c-correct); }
+  .div-check-box.no-rem { border-color: var(--c-wrong); background: #fff5f5; }
+  .div-check-box.no-rem .div-result { color: var(--c-wrong); }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-strip {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .prog-seg {
+    height: 8px;
+    flex: 1;
+    border-radius: 4px;
+    background: #dde1f0;
+    transition: background .4s;
+  }
+  .prog-seg.done { background: var(--c-correct); }
+
+  /* ===== STAR CONFETTI ===== */
+  .stars-row { display: flex; gap: 6px; font-size: 24px; margin-top: 8px; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    #nav { width: 70px; padding: 14px 4px; }
+    .nav-btn { font-size: 9px; padding: 10px 4px; min-height: 70px; }
+    .nav-btn .nav-icon { font-size: 22px; }
+    #main { padding: 16px 14px; }
+    .div-grid { grid-template-columns: 1fr; }
+    .math-input { width: 60px; height: 46px; font-size: 18px; }
+    .eq-box { font-size: 18px; }
+    .num-btn { width: 60px; height: 60px; font-size: 22px; }
+  }
+
+  /* ===== TOOLTIP ===== */
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-wrap .tip {
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e2a5e;
+    color: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+    z-index: 10;
+  }
+  .tooltip-wrap:hover .tip { opacity: 1; }
+
+  /* ===== SECTION PROGRESS BADGE ===== */
+  .sec-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e2a5e;
+  }
+  .sec-progress .sp-bar { flex: 1; height: 10px; background: #eef0f7; border-radius: 5px; overflow: hidden; }
+  .sec-progress .sp-fill { height: 100%; background: var(--c-1); border-radius: 5px; transition: width .5s; }
+  #sec2 .sp-fill { background: var(--c-2); }
+  #sec3 .sp-fill { background: var(--c-3); }
+  #sec4 .sp-fill { background: var(--c-4); }
+</style>
+</head>
+<body>
+
+<!-- ===== LEFT NAVIGATION ===== -->
+<nav id="nav">
+  <div class="nav-logo">11.2<br>Maths</div>
+  <button class="nav-btn active" data-sec="1">
+    <span class="nav-icon">✖️</span>
+    <span>Multiply</span>
+    <div class="nav-dots" id="nd1"></div>
+  </button>
+  <button class="nav-btn" data-sec="2">
+    <span class="nav-icon">➗</span>
+    <span>Divide</span>
+    <div class="nav-dots" id="nd2"></div>
+  </button>
+  <button class="nav-btn" data-sec="3">
+    <span class="nav-icon">🍬</span>
+    <span>Sweets</span>
+    <div class="nav-dots" id="nd3"></div>
+  </button>
+  <button class="nav-btn" data-sec="4">
+    <span class="nav-icon">🧠</span>
+    <span>Puzzle</span>
+    <div class="nav-dots" id="nd4"></div>
+  </button>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main id="main">
+
+  <!-- ==============================
+       SECTION 1 – DISTRIBUTIVE MULT
+       ============================== -->
+  <section id="sec1" class="section active">
+    <div class="sec-header">
+      <div class="badge">Activity 1 of 4</div>
+      <h1>🔢 Splitting Numbers to Multiply</h1>
+      <p>Big numbers are easier when we split them! Use the distributive property to solve each problem step by step.</p>
+    </div>
+
+    <div class="sec-progress">
+      <span id="s1-prog-txt">0 / 4 done</span>
+      <div class="sp-bar"><div class="sp-fill" id="s1-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="concept-box">
+        💡 <strong>Key Idea:</strong> Split a big number into tens and ones, multiply each part, then add them together.<br>
+        Example: <strong>16 × 4</strong> → (10 × 4) + (6 × 4) = 40 + 24 = <strong>64</strong>
+      </div>
+
+      <!-- Problem Tabs -->
+      <div class="problem-tabs" id="dist-tabs">
+        <button class="prob-tab active" data-prob="0">13 × 4</button>
+        <button class="prob-tab" data-prob="1">18 × 5</button>
+        <button class="prob-tab" data-prob="2">12 × 2</button>
+        <button class="prob-tab" data-prob="3">15 × 3</button>
+      </div>
+
+      <!-- ---- Problem 0: 13×4 ---- -->
+      <div class="dist-solver active" id="dp0">
+        <h2>13 × 4 = ?</h2>
+        <p class="step-label">Step 1 – Split 13 into tens and ones</p>
+        <div class="step-row">
+          13 =
+          <input class="math-input" id="d0-t" type="number" placeholder="?" maxlength="2" inputmode="numeric">
+          <span>+</span>
+          <input class="math-input" id="d0-o" type="number" placeholder="?" maxlength="1" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 2 – Multiply each part by 4</p>
+        <div class="step-row">
+          <input class="math-input" id="d0-ta" type="number" placeholder="?" inputmode="numeric"> × 4 =
+          <input class="math-input wide" id="d0-tr" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="step-row">
+          <input class="math-input" id="d0-oa" type="number" placeholder="?" inputmode="numeric"> × 4 =
+          <input class="math-input wide" id="d0-or" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 3 – Add both products</p>
+        <div class="step-row eq-box">
+          <input class="math-input wide" id="d0-a1" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">+</span>
+          <input class="math-input wide" id="d0-a2" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">=</span>
+          <span class="eq-result" id="d0-ans">?</span>
+        </div>
+        <br>
+        <button class="btn-check btn-primary" data-prob="0">✓ Check My Answers</button>
+        <div class="feedback" id="d0-fb"></div>
+      </div>
+
+      <!-- ---- Problem 1: 18×5 ---- -->
+      <div class="dist-solver" id="dp1">
+        <h2>18 × 5 = ?</h2>
+        <p class="step-label">Step 1 – Split 18 into tens and ones</p>
+        <div class="step-row">
+          18 =
+          <input class="math-input" id="d1-t" type="number" placeholder="?" inputmode="numeric">
+          <span>+</span>
+          <input class="math-input" id="d1-o" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 2 – Multiply each part by 5</p>
+        <div class="step-row">
+          <input class="math-input" id="d1-ta" type="number" placeholder="?" inputmode="numeric"> × 5 =
+          <input class="math-input wide" id="d1-tr" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="step-row">
+          <input class="math-input" id="d1-oa" type="number" placeholder="?" inputmode="numeric"> × 5 =
+          <input class="math-input wide" id="d1-or" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 3 – Add both products</p>
+        <div class="step-row eq-box">
+          <input class="math-input wide" id="d1-a1" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">+</span>
+          <input class="math-input wide" id="d1-a2" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">=</span>
+          <span class="eq-result" id="d1-ans">?</span>
+        </div>
+        <br>
+        <button class="btn-check btn-primary" data-prob="1">✓ Check My Answers</button>
+        <div class="feedback" id="d1-fb"></div>
+      </div>
+
+      <!-- ---- Problem 2: 12×2 ---- -->
+      <div class="dist-solver" id="dp2">
+        <h2>12 × 2 = ?</h2>
+        <p class="step-label">Step 1 – Split 12 into tens and ones</p>
+        <div class="step-row">
+          12 =
+          <input class="math-input" id="d2-t" type="number" placeholder="?" inputmode="numeric">
+          <span>+</span>
+          <input class="math-input" id="d2-o" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 2 – Multiply each part by 2</p>
+        <div class="step-row">
+          <input class="math-input" id="d2-ta" type="number" placeholder="?" inputmode="numeric"> × 2 =
+          <input class="math-input wide" id="d2-tr" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="step-row">
+          <input class="math-input" id="d2-oa" type="number" placeholder="?" inputmode="numeric"> × 2 =
+          <input class="math-input wide" id="d2-or" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 3 – Add both products</p>
+        <div class="step-row eq-box">
+          <input class="math-input wide" id="d2-a1" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">+</span>
+          <input class="math-input wide" id="d2-a2" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">=</span>
+          <span class="eq-result" id="d2-ans">?</span>
+        </div>
+        <br>
+        <button class="btn-check btn-primary" data-prob="2">✓ Check My Answers</button>
+        <div class="feedback" id="d2-fb"></div>
+      </div>
+
+      <!-- ---- Problem 3: 15×3 ---- -->
+      <div class="dist-solver" id="dp3">
+        <h2>15 × 3 = ?</h2>
+        <p class="step-label">Step 1 – Split 15 into tens and ones</p>
+        <div class="step-row">
+          15 =
+          <input class="math-input" id="d3-t" type="number" placeholder="?" inputmode="numeric">
+          <span>+</span>
+          <input class="math-input" id="d3-o" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 2 – Multiply each part by 3</p>
+        <div class="step-row">
+          <input class="math-input" id="d3-ta" type="number" placeholder="?" inputmode="numeric"> × 3 =
+          <input class="math-input wide" id="d3-tr" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="step-row">
+          <input class="math-input" id="d3-oa" type="number" placeholder="?" inputmode="numeric"> × 3 =
+          <input class="math-input wide" id="d3-or" type="number" placeholder="?" inputmode="numeric">
+        </div>
+        <div class="arrow-down">↓</div>
+        <p class="step-label">Step 3 – Add both products</p>
+        <div class="step-row eq-box">
+          <input class="math-input wide" id="d3-a1" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">+</span>
+          <input class="math-input wide" id="d3-a2" type="number" placeholder="?" inputmode="numeric">
+          <span class="eq-op">=</span>
+          <span class="eq-result" id="d3-ans">?</span>
+        </div>
+        <br>
+        <button class="btn-check btn-primary" data-prob="3">✓ Check My Answers</button>
+        <div class="feedback" id="d3-fb"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==============================
+       SECTION 2 – DIVISION WITH REMAINDERS
+       ============================== -->
+  <section id="sec2" class="section">
+    <div class="sec-header">
+      <div class="badge">Activity 2 of 4</div>
+      <h1>➗ Division with Remainders</h1>
+      <p>Complete each division. Remember to include any remainder! If there is no remainder, write <strong>0</strong>.</p>
+    </div>
+
+    <div class="sec-progress">
+      <span id="s2-prog-txt">0 / 6 done</span>
+      <div class="sp-bar"><div class="sp-fill" id="s2-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="concept-box" style="border-color:var(--c-2)">
+        💡 <strong>Remember:</strong> When sharing doesn't work out equally, what's left over is called the <strong>remainder (r)</strong>.<br>
+        Example: 14 ÷ 4 = <strong>3</strong> remainder <strong>2</strong> (because 4×3=12, and 14−12=2)
+      </div>
+      <div class="div-grid" id="div-grid">
+        <!-- Cards generated by JS -->
+      </div>
+      <br>
+      <button class="btn-check btn-primary" id="div-check-all">✓ Check All Answers</button>
+      <div class="feedback" id="div-fb"></div>
+    </div>
+  </section>
+
+  <!-- ==============================
+       SECTION 3 – SWEETS WORD PROBLEM
+       ============================== -->
+  <section id="sec3" class="section">
+    <div class="sec-header">
+      <div class="badge">Activity 3 of 4</div>
+      <h1>🍬 Sharing Sweets</h1>
+      <p>Read the word problem carefully, then fill in the division calculation!</p>
+    </div>
+
+    <div class="sec-progress">
+      <span id="s3-prog-txt">Not completed yet</span>
+      <div class="sp-bar"><div class="sp-fill" id="s3-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="concept-box" style="border-color:var(--c-3); background:#fff9f0;">
+        📖 <strong>Word Problem:</strong><br><br>
+        Four children share a bag of <strong>30 sweets</strong> between them equally.<br>
+        How many sweets does each child get?<br>
+        Write the division calculation that shows the result.
+      </div>
+
+      <!-- Visual sweets -->
+      <p class="step-label">Here are all 30 sweets:</p>
+      <div class="sweets-visual" id="sweets-bag"></div>
+
+      <p class="step-label" style="margin-top:16px;">Each child gets:</p>
+      <div class="children-row" id="children-row">
+        <div class="child-box"><div class="child-icon">🧒</div><div class="child-count" id="cc0">?</div></div>
+        <div class="child-box"><div class="child-icon">👦</div><div class="child-count" id="cc1">?</div></div>
+        <div class="child-box"><div class="child-icon">👧</div><div class="child-count" id="cc2">?</div></div>
+        <div class="child-box"><div class="child-icon">🧒</div><div class="child-count" id="cc3">?</div></div>
+      </div>
+      <p style="font-size:13px; color:#888; margin-bottom:16px;">🍬 × 2 left over (remainder)</p>
+
+      <p class="step-label">Now write the division calculation:</p>
+      <div class="step-row eq-box" style="margin:12px 0 20px; gap:10px; font-size:22px;">
+        <input class="math-input wide" id="sw-div" type="number" placeholder="?" inputmode="numeric">
+        <span class="eq-op">÷</span>
+        <input class="math-input" id="sw-div2" type="number" placeholder="?" inputmode="numeric">
+        <span class="eq-op">=</span>
+        <input class="math-input wide" id="sw-q" type="number" placeholder="?" inputmode="numeric">
+        <span class="eq-op" style="font-size:16px;">remainder</span>
+        <input class="math-input" id="sw-r" type="number" placeholder="?" inputmode="numeric">
+      </div>
+
+      <button class="btn-check btn-primary" id="sw-check">✓ Check My Answer</button>
+      <div class="feedback" id="sw-fb"></div>
+    </div>
+  </section>
+
+  <!-- ==============================
+       SECTION 4 – NUMBER PUZZLE
+       ============================== -->
+  <section id="sec4" class="section">
+    <div class="sec-header">
+      <div class="badge">Activity 4 of 4</div>
+      <h1>🧠 Think Like a Mathematician</h1>
+      <p>This is a challenge puzzle. Use what you know about remainders to find the secret number!</p>
+    </div>
+
+    <div class="sec-progress">
+      <span id="s4-prog-txt">Still searching…</span>
+      <div class="sp-bar"><div class="sp-fill" id="s4-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="concept-box" style="border-color:var(--c-4); background:#f5f3ff;">
+        🔍 <strong>The Puzzle:</strong><br><br>
+        Find a number between <strong>10 and 20</strong> that <em>always leaves a remainder</em> when you divide it by <strong>2, 3, 4, and 5</strong>.<br><br>
+        👉 Click a number to test it!
+      </div>
+
+      <div class="number-grid" id="num-grid">
+        <!-- 11–19 generated by JS -->
+      </div>
+
+      <!-- Live divisor check display -->
+      <div id="div-check-display" style="display:none;">
+        <p class="step-label" style="margin-bottom:8px;">Testing number: <strong id="testing-num"></strong></p>
+        <div class="divisor-check-grid" id="div-checks"></div>
+        <div class="feedback" id="puz-fb" style="margin-top:10px;"></div>
+      </div>
+
+      <div id="puz-success" style="display:none; margin-top:20px; padding:20px; background:#ebfbee; border-radius:16px; border:3px solid #40c057; text-align:center;">
+        <div style="font-size:48px;">🎉</div>
+        <div style="font-family:var(--font-h); font-size:24px; color:#2f9e44; margin:8px 0;">Amazing! You found it!</div>
+        <div style="font-size:16px; color:#555; line-height:1.5;">The numbers that always leave remainders when divided by 2, 3, 4, and 5 are <strong>prime numbers</strong> — numbers only divisible by 1 and themselves!<br>Valid answers: 11, 13, 17, 19 ⭐</div>
+      </div>
+    </div>
+
+    <div class="card" id="hint-card">
+      <h2>💡 Hints</h2>
+      <ul style="padding-left: 20px; line-height: 2; font-size: 16px; color: #444;">
+        <li>Even numbers (12, 14, 16, 18) are always divisible by 2 — no remainder!</li>
+        <li>Look for numbers that can't be shared equally by 2, 3, 4, or 5.</li>
+        <li>These special numbers are called <strong>prime numbers</strong>.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== STATE =====
+  const lessonState = {
+    currentSection: 1,
+    dist: { done: [false, false, false, false] },
+    div: { done: [false, false, false, false, false, false] },
+    sweets: { done: false },
+    puzzle: { done: false, found: [] }
+  };
+
+  // ===== DIVISION PROBLEMS DATA =====
+  const divProblems = [
+    { label: 'a', dividend: 28, divisor: 4 },
+    { label: 'b', dividend: 25, divisor: 2 },
+    { label: 'c', dividend: 53, divisor: 5 },
+    { label: 'd', dividend: 32, divisor: 4 },
+    { label: 'e', dividend: 10, divisor: 4 },
+    { label: 'f', dividend: 46, divisor: 3 }
+  ];
+
+  // ===== DISTRIBUTIVE PROBLEMS DATA =====
+  const distProblems = [
+    { num: 13, mult: 4, tens: 10, ones: 3 },
+    { num: 18, mult: 5, tens: 10, ones: 8 },
+    { num: 12, mult: 2, tens: 10, ones: 2 },
+    { num: 15, mult: 3, tens: 10, ones: 5 }
+  ];
+
+  // ===== INIT ON DOM READY =====
+  document.addEventListener('DOMContentLoaded', function () {
+    initNav();
+    initDistributive();
+    initDivision();
+    initSweets();
+    initPuzzle();
+    updateNavDots();
+  });
+
+  /* ============================================================
+     NAVIGATION
+  ============================================================ */
+  function initNav() {
+    document.querySelectorAll('.nav-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const sec = parseInt(btn.dataset.sec);
+        switchSection(sec);
+      });
+    });
+  }
+
+  function switchSection(n) {
+    lessonState.currentSection = n;
+    document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+    document.getElementById('sec' + n).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelector('.nav-btn[data-sec="' + n + '"]').classList.add('active');
+    document.getElementById('main').scrollTop = 0;
+  }
+
+  function updateNavDots() {
+    // Section 1: 4 dots
+    renderDots('nd1', lessonState.dist.done);
+    // Section 2: 6 dots
+    renderDots('nd2', lessonState.div.done);
+    // Section 3: 1 dot
+    renderDots('nd3', [lessonState.sweets.done]);
+    // Section 4: 1 dot
+    renderDots('nd4', [lessonState.puzzle.done]);
+  }
+
+  function renderDots(id, arr) {
+    const wrap = document.getElementById(id);
+    if (!wrap) return;
+    wrap.innerHTML = arr.map(function(d) {
+      return '<div class="nav-dot' + (d ? ' done' : '') + '"></div>';
+    }).join('');
+  }
+
+  /* ============================================================
+     SECTION 1 – DISTRIBUTIVE MULTIPLICATION
+  ============================================================ */
+  function initDistributive() {
+    // Tab switching
+    document.querySelectorAll('.prob-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        const p = parseInt(tab.dataset.prob);
+        document.querySelectorAll('.prob-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        document.querySelectorAll('.dist-solver').forEach(function(s) { s.classList.remove('active'); });
+        document.getElementById('dp' + p).classList.add('active');
+      });
+    });
+
+    // Check buttons
+    document.querySelectorAll('.btn-check[data-prob]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        checkDist(parseInt(btn.dataset.prob));
+      });
+    });
+  }
+
+  function checkDist(p) {
+    const prob = distProblems[p];
+    const prefix = 'd' + p;
+    const t  = parseInt(document.getElementById(prefix + '-t').value) || 0;
+    const o  = parseInt(document.getElementById(prefix + '-o').value) || 0;
+    const ta = parseInt(document.getElementById(prefix + '-ta').value) || 0;
+    const tr = parseInt(document.getElementById(prefix + '-tr').value) || 0;
+    const oa = parseInt(document.getElementById(prefix + '-oa').value) || 0;
+    const or_ = parseInt(document.getElementById(prefix + '-or').value) || 0;
+    const a1 = parseInt(document.getElementById(prefix + '-a1').value) || 0;
+    const a2 = parseInt(document.getElementById(prefix + '-a2').value) || 0;
+    const ansEl = document.getElementById(prefix + '-ans');
+    const fb = document.getElementById(prefix + '-fb');
+
+    const correctT  = prob.tens;
+    const correctO  = prob.ones;
+    const correctTR = prob.tens * prob.mult;
+    const correctOR = prob.ones * prob.mult;
+    const correctA1 = correctTR;
+    const correctA2 = correctOR;
+    const finalAns  = prob.num * prob.mult;
+
+    let allOk = true;
+    const checks = [
+      ['d'+p+'-t',  t,  correctT],
+      ['d'+p+'-o',  o,  correctO],
+      ['d'+p+'-ta', ta, correctT],
+      ['d'+p+'-tr', tr, correctTR],
+      ['d'+p+'-oa', oa, correctO],
+      ['d'+p+'-or', or_,correctOR],
+      ['d'+p+'-a1', a1, correctA1],
+      ['d'+p+'-a2', a2, correctA2]
+    ];
+
+    checks.forEach(function(c) {
+      const el = document.getElementById(c[0]);
+      el.classList.remove('correct', 'incorrect');
+      if (c[1] === c[2]) { el.classList.add('correct'); }
+      else { el.classList.add('incorrect'); allOk = false; }
+    });
+
+    ansEl.textContent = (a1 + a2 === finalAns && allOk) ? '🎉 ' + finalAns : (a1 + a2) || '?';
+
+    fb.className = 'feedback show ' + (allOk ? 'ok' : 'bad');
+    if (allOk) {
+      fb.textContent = '⭐ Perfect! ' + prob.num + ' × ' + prob.mult + ' = ' + finalAns + '. Well done!';
+      lessonState.dist.done[p] = true;
+      document.querySelectorAll('.prob-tab')[p].classList.add('done');
+      updateNavDots();
+      updateS1Progress();
+    } else {
+      fb.textContent = '🤔 Some answers need fixing. Check the red boxes and try again!';
+    }
+  }
+
+  function updateS1Progress() {
+    const n = lessonState.dist.done.filter(Boolean).length;
+    document.getElementById('s1-prog-txt').textContent = n + ' / 4 done';
+    document.getElementById('s1-fill').style.width = (n / 4 * 100) + '%';
+  }
+
+  /* ============================================================
+     SECTION 2 – DIVISION WITH REMAINDERS
+  ============================================================ */
+  function initDivision() {
+    const grid = document.getElementById('div-grid');
+    divProblems.forEach(function(prob, i) {
+      const q = Math.floor(prob.dividend / prob.divisor);
+      const r = prob.dividend % prob.divisor;
+      const card = document.createElement('div');
+      card.className = 'div-card';
+      card.innerHTML = `
+        <div class="label">Problem ${prob.label}</div>
+        <div class="div-eq">
+          <span>${prob.dividend} ÷ ${prob.divisor} =</span>
+          <input class="math-input" id="dq${i}" type="number" placeholder="?" inputmode="numeric">
+          <span class="r-label">remainder</span>
+          <input class="math-input" id="dr${i}" type="number" placeholder="r" inputmode="numeric">
+        </div>
+        <div class="feedback" id="df${i}"></div>
+      `;
+      grid.appendChild(card);
+
+      // Live check on input change
+      ['dq' + i, 'dr' + i].forEach(function(id) {
+        document.getElementById(id).addEventListener('change', function() {
+          liveCheckDiv(i);
+        });
+      });
+    });
+
+    document.getElementById('div-check-all').addEventListener('click', checkAllDiv);
+  }
+
+  function liveCheckDiv(i) {
+    const prob = divProblems[i];
+    const qInput = document.getElementById('dq' + i);
+    const rInput = document.getElementById('dr' + i);
+    const fb = document.getElementById('df' + i);
+    const qVal = qInput.value.trim();
+    const rVal = rInput.value.trim();
+
+    if (qVal === '' || rVal === '') return; // not filled yet
+
+    const correctQ = Math.floor(prob.dividend / prob.divisor);
+    const correctR = prob.dividend % prob.divisor;
+    const studentQ = parseInt(qVal);
+    const studentR = rVal === '' ? 0 : parseInt(rVal);
+    const remOk = (correctR === 0) ? (studentR === 0 || rVal === '') : (studentR === correctR);
+
+    qInput.classList.remove('correct', 'incorrect');
+    rInput.classList.remove('correct', 'incorrect');
+    fb.className = 'feedback';
+
+    if (studentQ === correctQ && remOk) {
+      qInput.classList.add('correct');
+      rInput.classList.add('correct');
+      fb.className = 'feedback show ok';
+      fb.textContent = '✓ Correct!';
+      lessonState.div.done[i] = true;
+      updateNavDots();
+      updateS2Progress();
+    }
+  }
+
+  function checkAllDiv() {
+    let allOk = true;
+    divProblems.forEach(function(prob, i) {
+      const qInput = document.getElementById('dq' + i);
+      const rInput = document.getElementById('dr' + i);
+      const fb = document.getElementById('df' + i);
+      const qVal = qInput.value.trim();
+      const rVal = rInput.value.trim();
+      const correctQ = Math.floor(prob.dividend / prob.divisor);
+      const correctR = prob.dividend % prob.divisor;
+      const studentQ = parseInt(qVal) || 0;
+      const studentR = (rVal === '' || rVal === undefined) ? 0 : parseInt(rVal);
+      const remOk = (correctR === 0) ? (studentR === 0 || rVal === '' || rVal === '0') : (studentR === correctR);
+      const qOk = studentQ === correctQ;
+
+      qInput.classList.remove('correct', 'incorrect');
+      rInput.classList.remove('correct', 'incorrect');
+      fb.className = 'feedback';
+
+      if (qOk && remOk) {
+        qInput.classList.add('correct');
+        rInput.classList.add('correct');
+        fb.className = 'feedback show ok';
+        fb.textContent = '✓ Correct! ' + prob.dividend + ' ÷ ' + prob.divisor + ' = ' + correctQ + (correctR > 0 ? ' r ' + correctR : '');
+        lessonState.div.done[i] = true;
+      } else {
+        if (!qOk) qInput.classList.add('incorrect');
+        if (!remOk) rInput.classList.add('incorrect');
+        fb.className = 'feedback show bad';
+        fb.textContent = '✗ Check again!';
+        allOk = false;
+      }
+    });
+
+    const masterFb = document.getElementById('div-fb');
+    masterFb.className = 'feedback show ' + (allOk ? 'ok' : 'bad');
+    masterFb.textContent = allOk
+      ? '🎊 All 6 correct! Fantastic work!'
+      : '🤔 Some need fixing — look for the red boxes!';
+
+    updateNavDots();
+    updateS2Progress();
+  }
+
+  function updateS2Progress() {
+    const n = lessonState.div.done.filter(Boolean).length;
+    document.getElementById('s2-prog-txt').textContent = n + ' / 6 done';
+    document.getElementById('s2-fill').style.width = (n / 6 * 100) + '%';
+  }
+
+  /* ============================================================
+     SECTION 3 – SWEETS
+  ============================================================ */
+  const sweetEmojis = ['🍬','🍭','🍡','🧁','🍫','🍩'];
+
+  function initSweets() {
+    // Render sweets
+    const bag = document.getElementById('sweets-bag');
+    for (let i = 0; i < 30; i++) {
+      const s = document.createElement('div');
+      s.className = 'sweet';
+      s.textContent = sweetEmojis[i % sweetEmojis.length];
+      bag.appendChild(s);
+    }
+
+    // Show children split
+    for (let c = 0; c < 4; c++) {
+      document.getElementById('cc' + c).textContent = '7 🍬';
+    }
+
+    document.getElementById('sw-check').addEventListener('click', checkSweets);
+  }
+
+  function checkSweets() {
+    const div   = parseInt(document.getElementById('sw-div').value) || 0;
+    const div2  = parseInt(document.getElementById('sw-div2').value) || 0;
+    const q     = parseInt(document.getElementById('sw-q').value) || 0;
+    const r     = parseInt(document.getElementById('sw-r').value) || 0;
+    const fb    = document.getElementById('sw-fb');
+
+    const allOk = div === 30 && div2 === 4 && q === 7 && r === 2;
+
+    ['sw-div','sw-div2','sw-q','sw-r'].forEach(function(id, idx) {
+      const vals = [30, 4, 7, 2];
+      const el = document.getElementById(id);
+      el.classList.remove('correct','incorrect');
+      const v = parseInt(el.value) || 0;
+      el.classList.add(v === vals[idx] ? 'correct' : 'incorrect');
+    });
+
+    fb.className = 'feedback show ' + (allOk ? 'ok' : 'bad');
+    if (allOk) {
+      fb.textContent = '🎉 Correct! 30 ÷ 4 = 7 remainder 2. Each child gets 7 sweets and 2 are left over!';
+      lessonState.sweets.done = true;
+      document.getElementById('s3-prog-txt').textContent = '✅ Completed!';
+      document.getElementById('s3-fill').style.width = '100%';
+      updateNavDots();
+    } else {
+      fb.textContent = '🤔 Not quite — check the red boxes. How many sweets total? How many children?';
+    }
+  }
+
+  /* ============================================================
+     SECTION 4 – NUMBER PUZZLE
+  ============================================================ */
+  const validAnswers = [11, 13, 17, 19];
+
+  function initPuzzle() {
+    const grid = document.getElementById('num-grid');
+    for (let n = 11; n <= 19; n++) {
+      const btn = document.createElement('button');
+      btn.className = 'num-btn';
+      btn.textContent = n;
+      btn.dataset.num = n;
+      btn.addEventListener('click', function() { testNumber(n, btn); });
+      grid.appendChild(btn);
+    }
+  }
+
+  function testNumber(n, btn) {
+    document.querySelectorAll('.num-btn').forEach(function(b) {
+      b.classList.remove('selected', 'correct-num', 'wrong-num');
+    });
+    btn.classList.add('selected');
+
+    document.getElementById('div-check-display').style.display = 'block';
+    document.getElementById('testing-num').textContent = n;
+
+    const divisors = [2, 3, 4, 5];
+    const checksEl = document.getElementById('div-checks');
+    checksEl.innerHTML = '';
+
+    let allHaveRemainder = true;
+
+    divisors.forEach(function(d) {
+      const q = Math.floor(n / d);
+      const r = n % d;
+      const hasRem = r > 0;
+      if (!hasRem) allHaveRemainder = false;
+
+      const box = document.createElement('div');
+      box.className = 'div-check-box ' + (hasRem ? 'has-rem' : 'no-rem');
+      box.innerHTML = `
+        <div class="div-by">÷ ${d}</div>
+        <div class="div-result">${q} r ${r}</div>
+        <div style="font-size:18px; margin-top:4px;">${hasRem ? '✅' : '❌'}</div>
+      `;
+      checksEl.appendChild(box);
+    });
+
+    const fb = document.getElementById('puz-fb');
+    fb.className = 'feedback show';
+
+    if (allHaveRemainder) {
+      btn.classList.remove('selected');
+      btn.classList.add('correct-num');
+      fb.classList.add('ok');
+      fb.textContent = '🌟 Yes! ' + n + ' leaves a remainder with ALL four divisors!';
+      lessonState.puzzle.done = true;
+      if (!lessonState.puzzle.found.includes(n)) lessonState.puzzle.found.push(n);
+      document.getElementById('puz-success').style.display = 'block';
+      document.getElementById('s4-prog-txt').textContent = '✅ Found it!';
+      document.getElementById('s4-fill').style.width = '100%';
+      updateNavDots();
+    } else {
+      btn.classList.remove('selected');
+      btn.classList.add('wrong-num');
+      fb.classList.add('bad');
+      fb.textContent = '❌ ' + n + ' does NOT leave a remainder for all four — look for the ❌ box!';
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
